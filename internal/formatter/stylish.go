@@ -7,8 +7,7 @@ import (
 	"strings"
 )
 
-func Stylish(raw differ.Differences) string {
-	// Prepare keys
+func collectSortedKeys(raw differ.Differences) []string {
 	allKeys := make(map[string]struct{})
 
 	for k := range raw.Same {
@@ -29,6 +28,12 @@ func Stylish(raw differ.Differences) string {
 		keys = append(keys, k)
 	}
 	sort.Strings(keys)
+
+	return keys
+}
+
+func Stylish(raw differ.Differences) string {
+	keys := collectSortedKeys(raw)
 
 	// make formatted string
 	var b strings.Builder
