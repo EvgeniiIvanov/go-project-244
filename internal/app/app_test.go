@@ -8,9 +8,16 @@ import (
 )
 
 func TestRunToStringWithFixtures(t *testing.T) {
-	fixturesDir := filepath.Join("..", "..", "testdata", "fixtures")
+	formats := []struct {
+		name string
+		dir  string
+		ext  string
+	}{
+		{name: "JSON", dir: "json", ext: ".json"},
+		{name: "YAML", dir: "yaml", ext: ".yaml"},
+	}
 
-	tests := []struct {
+	testCases := []struct {
 		name        string
 		file1       string
 		file2       string
@@ -19,8 +26,8 @@ func TestRunToStringWithFixtures(t *testing.T) {
 	}{
 		{
 			name:  "identical files",
-			file1: "flat1.json",
-			file2: "flat3.json",
+			file1: "flat1",
+			file2: "flat3",
 			expected: []string{
 				"    host: hexlet.io",
 				"    timeout: 50",
@@ -33,8 +40,8 @@ func TestRunToStringWithFixtures(t *testing.T) {
 		},
 		{
 			name:  "different structure",
-			file1: "flat1.json",
-			file2: "flat2.json",
+			file1: "flat1",
+			file2: "flat2",
 			expected: []string{
 				"  - follow: false",
 				"    host: hexlet.io",
@@ -47,8 +54,8 @@ func TestRunToStringWithFixtures(t *testing.T) {
 		},
 		{
 			name:  "different values same keys",
-			file1: "flat2.json",
-			file2: "flat4.json",
+			file1: "flat2",
+			file2: "flat4",
 			expected: []string{
 				"  - host: hexlet.io",
 				"  + host: coursera.org",
@@ -60,8 +67,8 @@ func TestRunToStringWithFixtures(t *testing.T) {
 		},
 		{
 			name:  "first file empty",
-			file1: "empty.json",
-			file2: "flat1.json",
+			file1: "empty",
+			file2: "flat1",
 			expected: []string{
 				"  + follow: false",
 				"  + host: hexlet.io",
@@ -72,8 +79,8 @@ func TestRunToStringWithFixtures(t *testing.T) {
 		},
 		{
 			name:  "second file empty",
-			file1: "flat1.json",
-			file2: "empty.json",
+			file1: "flat1",
+			file2: "empty",
 			expected: []string{
 				"  - follow: false",
 				"  - host: hexlet.io",
@@ -84,8 +91,8 @@ func TestRunToStringWithFixtures(t *testing.T) {
 		},
 		{
 			name:  "both empty",
-			file1: "empty.json",
-			file2: "empty.json",
+			file1: "empty",
+			file2: "empty",
 			expected: []string{
 				"{", "}",
 			},
@@ -93,23 +100,29 @@ func TestRunToStringWithFixtures(t *testing.T) {
 		},
 	}
 
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			filePath1 := filepath.Join(fixturesDir, tc.file1)
-			filePath2 := filepath.Join(fixturesDir, tc.file2)
+	for _, format := range formats {
+		t.Run(format.name, func(t *testing.T) {
+			fixturesDir := filepath.Join("..", "..", "testdata", "fixtures", format.dir)
 
-			result, err := RunToString(filePath1, filePath2, "stylish")
+			for _, tc := range testCases {
+				t.Run(tc.name, func(t *testing.T) {
+					t.Helper()
 
-			assert.NoError(t, err)
+					file1 := filepath.Join(fixturesDir, tc.file1+format.ext)
+					file2 := filepath.Join(fixturesDir, tc.file2+format.ext)
 
-			for _, expected := range tc.expected {
-				assert.Contains(t, result, expected,
-					"Expected to contain: %s", expected)
-			}
+					result, err := RunToString(file1, file2, "stylish")
 
-			for _, notExpected := range tc.notExpected {
-				assert.NotContains(t, result, notExpected,
-					"Should not contain: %s", notExpected)
+					assert.NoError(t, err)
+
+					for _, line := range tc.expected {
+						assert.Contains(t, result, line, "Missing expected line: %s", line)
+					}
+
+					for _, line := range tc.notExpected {
+						assert.NotContains(t, result, line, "Found unexpected line: %s", line)
+					}
+				})
 			}
 		})
 	}

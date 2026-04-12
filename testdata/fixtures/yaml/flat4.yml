@@ -1,0 +1,3 @@
+timeout: 30
+verbose: false
+host: coursera.org
