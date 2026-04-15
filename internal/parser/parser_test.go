@@ -114,6 +114,13 @@ func TestParseYAML(t *testing.T) {
 			},
 		},
 		{
+			name:    "incomplete structure",
+			content: "key:",
+			expected: map[string]interface{}{
+				"key": nil,
+			},
+		},
+		{
 			name:     "empty object",
 			content:  "{}",
 			expected: map[string]interface{}{},
@@ -149,10 +156,6 @@ func TestParseInvalidYAML(t *testing.T) {
 		{
 			name:    "invalid indentation",
 			content: "user:\n name: Alice\n   age: 30",
-		},
-		{
-			name:    "incomplete structure",
-			content: "key:",
 		},
 	}
 
