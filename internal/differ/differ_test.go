@@ -111,6 +111,76 @@ func TestDiff(t *testing.T) {
 				assert.Equal(t, 31, userNode.Children["age"].NewValue)
 			},
 		},
+		{
+			name: "added nested object",
+			data1: map[string]interface{}{
+				"key": "value",
+			},
+			data2: map[string]interface{}{
+				"key": "value",
+				"config": map[string]interface{}{
+					"host": "localhost",
+					"port": 8080,
+				},
+			},
+			check: func(t *testing.T, node *DiffNode) {
+				assert.NotNil(t, node)
+				configNode := node.Children["config"]
+				assert.Equal(t, "added", configNode.Status)
+				assert.Len(t, configNode.Children, 2)
+				assert.Equal(t, "added", configNode.Children["host"].Status)
+				assert.Equal(t, "localhost", configNode.Children["host"].NewValue)
+				assert.Equal(t, "added", configNode.Children["port"].Status)
+				assert.Equal(t, 8080, configNode.Children["port"].NewValue)
+			},
+		},
+		{
+			name: "removed nested object",
+			data1: map[string]interface{}{
+				"cache": map[string]interface{}{
+					"enabled": true,
+					"ttl":     300,
+				},
+			},
+			data2: map[string]interface{}{},
+			check: func(t *testing.T, node *DiffNode) {
+				assert.NotNil(t, node)
+				cacheNode := node.Children["cache"]
+				assert.Equal(t, "removed", cacheNode.Status)
+				assert.Len(t, cacheNode.Children, 2)
+				assert.Equal(t, "removed", cacheNode.Children["enabled"].Status)
+				assert.Equal(t, true, cacheNode.Children["enabled"].OldValue)
+				assert.Equal(t, "removed", cacheNode.Children["ttl"].Status)
+				assert.Equal(t, 300, cacheNode.Children["ttl"].OldValue)
+			},
+		},
+		{
+			name: "unchanged nested object",
+			data1: map[string]interface{}{
+				"db": map[string]interface{}{
+					"host": "localhost",
+					"port": 5432,
+				},
+			},
+			data2: map[string]interface{}{
+				"db": map[string]interface{}{
+					"host": "localhost",
+					"port": 5432,
+				},
+			},
+			check: func(t *testing.T, node *DiffNode) {
+				assert.NotNil(t, node)
+				dbNode := node.Children["db"]
+				// When comparing nested maps, parent is marked as "modified" for processing
+				// but all children are "unchanged"
+				assert.Equal(t, "modified", dbNode.Status)
+				assert.Len(t, dbNode.Children, 2)
+				assert.Equal(t, "unchanged", dbNode.Children["host"].Status)
+				assert.Equal(t, "localhost", dbNode.Children["host"].OldValue)
+				assert.Equal(t, "unchanged", dbNode.Children["port"].Status)
+				assert.Equal(t, 5432, dbNode.Children["port"].OldValue)
+			},
+		},
 	}
 
 	for _, tc := range tests {

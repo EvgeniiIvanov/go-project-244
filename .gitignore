@@ -4,6 +4,9 @@ bin/
 # Go test binaries
 *.test
 
+# Coverage files
+*.out
+
 # Temporary files
 *.swp
 *.swo

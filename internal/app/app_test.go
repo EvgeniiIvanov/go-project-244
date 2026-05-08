@@ -177,3 +177,36 @@ func TestRunToStringWithFixtures(t *testing.T) {
 		})
 	}
 }
+
+func TestRunToStringErrors(t *testing.T) {
+	t.Run("file1 does not exist", func(t *testing.T) {
+		_, err := RunToString("nonexistent.json", "testdata/fixtures/json/flat1.json", "stylish")
+		assert.Error(t, err)
+	})
+
+	t.Run("file2 does not exist", func(t *testing.T) {
+		_, err := RunToString("testdata/fixtures/json/flat1.json", "nonexistent.json", "stylish")
+		assert.Error(t, err)
+	})
+
+	t.Run("unsupported file format", func(t *testing.T) {
+		_, err := RunToString("testdata/fixtures/json/flat1.txt", "testdata/fixtures/json/flat2.txt", "stylish")
+		assert.Error(t, err)
+	})
+}
+
+func TestRun(t *testing.T) {
+	t.Run("successful run", func(t *testing.T) {
+		file1 := filepath.Join("..", "..", "testdata", "fixtures", "json", "flat1.json")
+		file2 := filepath.Join("..", "..", "testdata", "fixtures", "json", "flat2.json")
+
+		// Run should not return an error for valid files
+		err := Run(file1, file2, "stylish")
+		assert.NoError(t, err)
+	})
+
+	t.Run("error with nonexistent file", func(t *testing.T) {
+		err := Run("nonexistent.json", filepath.Join("..", "..", "testdata", "fixtures", "json", "flat1.json"), "stylish")
+		assert.Error(t, err)
+	})
+}
