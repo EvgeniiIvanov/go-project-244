@@ -23,7 +23,5 @@ func parseYAML(filePath string) (map[string]interface{}, error) {
 		result = map[string]interface{}{}
 	}
 
-	fmt.Println(result)
-
 	return result, nil
 }

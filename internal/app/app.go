@@ -18,10 +18,7 @@ func RunToString(filePath1, filePath2 string, format string) (string, error) {
 		return "", fmt.Errorf("file2: %w", err)
 	}
 
-	raw, err := differ.Diff(data1, data2)
-	if err != nil {
-		return "", fmt.Errorf("diff error: %w", err)
-	}
+	raw := differ.Diff(data1, data2)
 
 	formatted, err := formatter.Format(raw, format)
 	if err != nil {
