@@ -124,7 +124,7 @@ sudo rm /usr/local/bin/gendiff
 
 ## Asciinema demo
 
-[![asciicast](https://asciinema.org/a/1025741.svg)](https://asciinema.org/a/1025741)
+[![asciicast](https://asciinema.org/a/1043405.svg)](https://asciinema.org/a/1043405)
 
 ## Development part
 
