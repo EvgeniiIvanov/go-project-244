@@ -171,9 +171,123 @@ func TestFormat(t *testing.T) {
 		assert.Contains(t, result, "  + key: new")
 	})
 
+	t.Run("plain format", func(t *testing.T) {
+		result, err := Format(root, "plain")
+		assert.NoError(t, err)
+		assert.Contains(t, result, "Property 'key' was updated. From 'old' to 'new'")
+	})
+
 	t.Run("unknown format", func(t *testing.T) {
 		_, err := Format(root, "unknown")
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "unknown format")
+	})
+}
+
+func TestIsComplexValue(t *testing.T) {
+	// Complex values
+	assert.True(t, isComplexValue(map[string]interface{}{"key": "value"}))
+	assert.True(t, isComplexValue([]interface{}{1, 2, 3}))
+	assert.True(t, isComplexValue([]string{"a", "b"}))
+	assert.True(t, isComplexValue([]int{1, 2}))
+	assert.True(t, isComplexValue([]float64{1.0, 2.0}))
+
+	// Simple values
+	assert.False(t, isComplexValue(nil))
+	assert.False(t, isComplexValue("string"))
+	assert.False(t, isComplexValue(42))
+	assert.False(t, isComplexValue(3.14))
+	assert.False(t, isComplexValue(true))
+}
+
+func TestIsMap(t *testing.T) {
+	// Is a map
+	m := map[string]interface{}{"key": "value"}
+	result, ok := isMap(m)
+	assert.True(t, ok)
+	assert.Equal(t, m, result)
+
+	// Not a map
+	_, ok = isMap("string")
+	assert.False(t, ok)
+
+	_, ok = isMap(42)
+	assert.False(t, ok)
+
+	_, ok = isMap(nil)
+	assert.False(t, ok)
+}
+
+func TestPlain(t *testing.T) {
+	t.Run("simple changes", func(t *testing.T) {
+		root := differ.NewDiffNode("", "unchanged")
+
+		addedNode := differ.NewDiffNode("added", "added")
+		addedNode.NewValue = "value"
+		root.Children["added"] = addedNode
+
+		removedNode := differ.NewDiffNode("removed", "removed")
+		removedNode.OldValue = 42
+		root.Children["removed"] = removedNode
+
+		modifiedNode := differ.NewDiffNode("modified", "modified")
+		modifiedNode.OldValue = false
+		modifiedNode.NewValue = true
+		root.Children["modified"] = modifiedNode
+
+		result := Plain(root, 0)
+
+		assert.Contains(t, result, "Property 'added' was added with value: 'value'")
+		assert.Contains(t, result, "Property 'removed' was removed")
+		assert.Contains(t, result, "Property 'modified' was updated. From false to true")
+	})
+
+	t.Run("nested changes", func(t *testing.T) {
+		root := differ.NewDiffNode("", "unchanged")
+
+		parentNode := differ.NewDiffNode("parent", "modified")
+		root.Children["parent"] = parentNode
+
+		childNode := differ.NewDiffNode("child", "modified")
+		childNode.OldValue = "old"
+		childNode.NewValue = "new"
+		parentNode.Children["child"] = childNode
+
+		result := Plain(root, 0)
+
+		assert.Contains(t, result, "Property 'parent.child' was updated. From 'old' to 'new'")
+	})
+
+	t.Run("complex values", func(t *testing.T) {
+		root := differ.NewDiffNode("", "unchanged")
+
+		complexNode := differ.NewDiffNode("config", "added")
+		complexNode.NewValue = map[string]interface{}{
+			"host": "localhost",
+			"port": 8080,
+		}
+		// Complex values have children
+		complexNode.Children = map[string]*differ.DiffNode{
+			"host": {Key: "host", Status: "added", NewValue: "localhost"},
+		}
+		root.Children["config"] = complexNode
+
+		result := Plain(root, 0)
+
+		assert.Contains(t, result, "Property 'config' was added with value: [complex value]")
+	})
+
+	t.Run("skips unchanged", func(t *testing.T) {
+		root := differ.NewDiffNode("", "unchanged")
+
+		unchangedNode := differ.NewDiffNode("unchanged", "unchanged")
+		unchangedNode.OldValue = "value"
+		unchangedNode.NewValue = "value"
+		root.Children["unchanged"] = unchangedNode
+
+		result := Plain(root, 0)
+
+		// Unchanged values should not appear in plain format
+		assert.NotContains(t, result, "unchanged")
 	})
 }

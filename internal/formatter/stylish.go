@@ -14,19 +14,10 @@ func formatValue(v interface{}) string {
 	return fmt.Sprintf("%v", v)
 }
 
-func sortedKeys(children map[string]*differ.DiffNode) []string {
-	keys := make([]string, 0, len(children))
-	for k := range children {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-	return keys
-}
-
 // renderValue renders a value, either as a simple value or as a nested structure
 // Used for modified nodes where one value is a map
 func renderValue(v interface{}, indent string, prefix string) string {
-	if m, isMap := v.(map[string]interface{}); isMap {
+	if m, ok := isMap(v); ok {
 		// Value is a map, render as nested structure
 		var result strings.Builder
 		fmt.Fprintf(&result, "%s%s{\n", indent, prefix)
