@@ -1,6 +1,7 @@
 package app
 
 import (
+	"encoding/json"
 	"path/filepath"
 	"testing"
 
@@ -246,6 +247,65 @@ func TestPlainFormat(t *testing.T) {
 			// Check that all expected lines are present
 			for _, line := range expectedLines {
 				assert.Contains(t, result, line, "Missing expected line: %s", line)
+			}
+		})
+	}
+}
+
+func TestJSONFormat(t *testing.T) {
+	formats := []struct {
+		name string
+		dir  string
+		ext  string
+	}{
+		{name: "JSON", dir: "json", ext: ".json"},
+		{name: "YAML", dir: "yaml", ext: ".yaml"},
+	}
+
+	for _, format := range formats {
+		t.Run(format.name, func(t *testing.T) {
+			file1 := filepath.Join("..", "..", "testdata", "fixtures", format.dir, "nested1"+format.ext)
+			file2 := filepath.Join("..", "..", "testdata", "fixtures", format.dir, "nested2"+format.ext)
+
+			result, err := RunToString(file1, file2, "json")
+			assert.NoError(t, err)
+
+			// Verify it's valid JSON
+			var output map[string]interface{}
+			err = json.Unmarshal([]byte(result), &output)
+			assert.NoError(t, err, "Output should be valid JSON")
+
+			// Check for expected JSON fragments
+			expectedFragments := []string{
+				`"status": "modified"`,
+				`"status": "added"`,
+				`"status": "removed"`,
+				`"status": "unchanged"`,
+				`"common"`,
+				`"group1"`,
+				`"group2"`,
+				`"group3"`,
+				`"setting1"`,
+				`"setting2"`,
+				`"setting3"`,
+				`"setting4"`,
+				`"setting5"`,
+				`"setting6"`,
+				`"follow"`,
+				`"baz"`,
+				`"nest"`,
+				`"children"`,
+				`"oldValue"`,
+				`"newValue"`,
+				`"Value 1"`,
+				`"blah blah"`,
+				`"so much"`,
+				`"vops"`,
+			}
+
+			// Check that all expected fragments are present
+			for _, fragment := range expectedFragments {
+				assert.Contains(t, result, fragment, "Missing expected fragment: %s", fragment)
 			}
 		})
 	}
