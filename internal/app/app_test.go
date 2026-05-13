@@ -210,3 +210,43 @@ func TestRun(t *testing.T) {
 		assert.Error(t, err)
 	})
 }
+
+func TestPlainFormat(t *testing.T) {
+	formats := []struct {
+		name string
+		dir  string
+		ext  string
+	}{
+		{name: "JSON", dir: "json", ext: ".json"},
+		{name: "YAML", dir: "yaml", ext: ".yaml"},
+	}
+
+	for _, format := range formats {
+		t.Run(format.name, func(t *testing.T) {
+			file1 := filepath.Join("..", "..", "testdata", "fixtures", format.dir, "nested1"+format.ext)
+			file2 := filepath.Join("..", "..", "testdata", "fixtures", format.dir, "nested2"+format.ext)
+
+			result, err := RunToString(file1, file2, "plain")
+			assert.NoError(t, err)
+
+			expectedLines := []string{
+				"Property 'common.follow' was added with value: false",
+				"Property 'common.setting2' was removed",
+				"Property 'common.setting3' was updated. From true to null",
+				"Property 'common.setting4' was added with value: 'blah blah'",
+				"Property 'common.setting5' was added with value: [complex value]",
+				"Property 'common.setting6.doge.wow' was updated. From '' to 'so much'",
+				"Property 'common.setting6.ops' was added with value: 'vops'",
+				"Property 'group1.baz' was updated. From 'bas' to 'bars'",
+				"Property 'group1.nest' was updated. From [complex value] to 'str'",
+				"Property 'group2' was removed",
+				"Property 'group3' was added with value: [complex value]",
+			}
+
+			// Check that all expected lines are present
+			for _, line := range expectedLines {
+				assert.Contains(t, result, line, "Missing expected line: %s", line)
+			}
+		})
+	}
+}
