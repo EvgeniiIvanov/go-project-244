@@ -10,7 +10,7 @@
 
 ## Description
 
-A command-line tool that compares two configuration files and shows the differences, similar to `diff`. Supports JSON and YAML formats, with a stylish output format that clearly indicates added, removed, and modified values in nested structures.
+A command-line tool that compares two configuration files and shows the differences, similar to `diff`. Supports JSON and YAML formats, with multiple output formats (stylish and plain) that clearly indicate added, removed, and modified values in nested structures.
 
 ## Usage
 
@@ -24,17 +24,26 @@ sudo cp bin/gendiff /usr/local/bin/
 ### How to use
 
 ```bash
-gendiff <file1> <file2>
+gendiff [--format <format>] <file1> <file2>
 ```
 
-Supported formats:
+**Options:**
+- `--format, -f` - Output format (default: "stylish")
+  - `stylish` - Tree-like format with symbols showing changes
+  - `plain` - Text format with property paths
+
+**Supported file formats:**
 - JSON (`.json`)
 - YAML (`.yaml`, `.yml`)
 
-Examples:
+**Examples:**
 ```bash
-# Compare two JSON files
+# Compare two JSON files (default stylish format)
 gendiff file1.json file2.json
+
+# Compare with plain text format
+gendiff --format plain file1.json file2.json
+gendiff -f plain file1.json file2.json
 
 # Compare two YAML files
 gendiff config1.yaml config2.yaml
@@ -43,9 +52,11 @@ gendiff config1.yaml config2.yaml
 gendiff testdata/fixtures/json/nested1.json testdata/fixtures/json/nested2.json
 ```
 
-### Output format
+### Output Formats
 
-The tool uses a "stylish" format that shows:
+#### Stylish Format (default)
+
+Tree-like format that shows structure and changes:
 - `  key: value` - unchanged values
 - `- key: value` - removed values
 - `+ key: value` - added values
@@ -55,7 +66,7 @@ The tool uses a "stylish" format that shows:
   + key: newValue
   ```
 
-Example output:
+**Example:**
 ```
 {
     common: {
@@ -80,6 +91,30 @@ Example output:
     }
 }
 ```
+
+#### Plain Format
+
+Human-readable text format showing property paths:
+
+**Example:**
+```
+Property 'common.follow' was added with value: false
+Property 'common.setting2' was removed
+Property 'common.setting3' was updated. From true to null
+Property 'common.setting4' was added with value: 'blah blah'
+Property 'common.setting5' was added with value: [complex value]
+Property 'common.setting6.doge.wow' was updated. From '' to 'so much'
+Property 'common.setting6.ops' was added with value: 'vops'
+Property 'group1.baz' was updated. From 'bas' to 'bars'
+Property 'group1.nest' was updated. From [complex value] to 'str'
+Property 'group2' was removed
+Property 'group3' was added with value: [complex value]
+```
+
+**Notes:**
+- Complex values (objects/arrays) are shown as `[complex value]`
+- String values are quoted
+- Unchanged properties are not shown
 
 ### How to uninstall
 
@@ -109,9 +144,10 @@ sudo rm /usr/local/bin/gendiff
 │   │   ├── differ.go        # Diff algorithm (tree-based)
 │   │   └── differ_test.go   # Differ unit tests
 │   ├── formatter
-│   │   ├── formatter.go     # Formatter interface
+│   │   ├── formatter.go     # Formatter dispatcher and shared utilities
 │   │   ├── formatter_test.go
-│   │   └── stylish.go       # Stylish output formatter
+│   │   ├── plain.go         # Plain text output formatter
+│   │   └── stylish.go       # Stylish tree output formatter
 │   └── parser
 │       ├── json.go          # JSON parser
 │       ├── parser.go        # Parser factory
@@ -135,10 +171,14 @@ sudo rm /usr/local/bin/gendiff
 ### Key features
 
 - **Recursive nested structure support**: Handles deeply nested objects
-- **Multiple format support**: JSON and YAML
+- **Multiple input format support**: JSON and YAML
+- **Multiple output formats**:
+  - Stylish: Tree-like format with visual indicators
+  - Plain: Human-readable text with property paths
 - **Type change handling**: Correctly displays when values change from primitives to objects or vice versa
 - **Status inheritance**: Children of added/removed nodes are displayed without redundant markers
 - **Comprehensive testing**: Unit tests, integration tests, and fixture-based testing
+- **High test coverage**: ~85% average coverage across all packages
 
 ### How to lint
 
