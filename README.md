@@ -10,7 +10,7 @@
 
 ## Description
 
-A command-line tool that compares two configuration files and shows the differences, similar to `diff`. Supports JSON and YAML formats, with multiple output formats (stylish and plain) that clearly indicate added, removed, and modified values in nested structures.
+A command-line tool that compares two configuration files and shows the differences, similar to `diff`. Supports JSON and YAML formats, with multiple output formats (stylish, plain, and json) that clearly indicate added, removed, and modified values in nested structures.
 
 ## Usage
 
@@ -31,6 +31,7 @@ gendiff [--format <format>] <file1> <file2>
 - `--format, -f` - Output format (default: "stylish")
   - `stylish` - Tree-like format with symbols showing changes
   - `plain` - Text format with property paths
+  - `json` - Machine-readable JSON format with status and values
 
 **Supported file formats:**
 - JSON (`.json`)
@@ -44,6 +45,10 @@ gendiff file1.json file2.json
 # Compare with plain text format
 gendiff --format plain file1.json file2.json
 gendiff -f plain file1.json file2.json
+
+# Compare with JSON format
+gendiff --format json file1.json file2.json
+gendiff -f json file1.json file2.json
 
 # Compare two YAML files
 gendiff config1.yaml config2.yaml
@@ -116,6 +121,60 @@ Property 'group3' was added with value: [complex value]
 - String values are quoted
 - Unchanged properties are not shown
 
+#### JSON Format
+
+Machine-readable format that represents the diff as structured JSON data:
+
+**Example:**
+```json
+{
+  "common": {
+    "status": "modified",
+    "children": {
+      "follow": {
+        "status": "added",
+        "newValue": false
+      },
+      "setting1": {
+        "status": "unchanged",
+        "oldValue": "Value 1"
+      },
+      "setting2": {
+        "status": "removed",
+        "oldValue": 200
+      },
+      "setting3": {
+        "status": "modified",
+        "oldValue": true,
+        "newValue": null
+      },
+      "setting6": {
+        "status": "modified",
+        "children": {
+          "doge": {
+            "status": "modified",
+            "children": {
+              "wow": {
+                "status": "modified",
+                "oldValue": "",
+                "newValue": "so much"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+**Notes:**
+- Each node has a `status` field: `added`, `removed`, `modified`, or `unchanged`
+- Leaf nodes have `oldValue` and/or `newValue` depending on the status
+- Container nodes have `children` with nested structure
+- Uses camelCase naming convention (JavaScript standard)
+- Perfect for programmatic processing or API responses
+
 ### How to uninstall
 
 ```bash
@@ -124,7 +183,7 @@ sudo rm /usr/local/bin/gendiff
 
 ## Asciinema demo
 
-[![asciicast](https://asciinema.org/a/1043405.svg)](https://asciinema.org/a/1043405)
+[![asciicast](https://asciinema.org/a/1051136.svg)](https://asciinema.org/a/1051136)
 
 ## Development part
 
@@ -146,6 +205,7 @@ sudo rm /usr/local/bin/gendiff
 │   ├── formatter
 │   │   ├── formatter.go     # Formatter dispatcher and shared utilities
 │   │   ├── formatter_test.go
+│   │   ├── json.go          # JSON output formatter
 │   │   ├── plain.go         # Plain text output formatter
 │   │   └── stylish.go       # Stylish tree output formatter
 │   └── parser
@@ -175,6 +235,7 @@ sudo rm /usr/local/bin/gendiff
 - **Multiple output formats**:
   - Stylish: Tree-like format with visual indicators
   - Plain: Human-readable text with property paths
+  - JSON: Machine-readable structured format
 - **Type change handling**: Correctly displays when values change from primitives to objects or vice versa
 - **Status inheritance**: Children of added/removed nodes are displayed without redundant markers
 - **Comprehensive testing**: Unit tests, integration tests, and fixture-based testing
