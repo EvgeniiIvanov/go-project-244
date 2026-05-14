@@ -2,6 +2,8 @@ package formatter
 
 import (
 	"code/internal/differ"
+	"encoding/json"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -177,6 +179,15 @@ func TestFormat(t *testing.T) {
 		assert.Contains(t, result, "Property 'key' was updated. From 'old' to 'new'")
 	})
 
+	t.Run("json format", func(t *testing.T) {
+		result, err := Format(root, "json")
+		assert.NoError(t, err)
+		assert.Contains(t, result, `"key"`)
+		assert.Contains(t, result, `"status": "modified"`)
+		assert.Contains(t, result, `"oldValue": "old"`)
+		assert.Contains(t, result, `"newValue": "new"`)
+	})
+
 	t.Run("unknown format", func(t *testing.T) {
 		_, err := Format(root, "unknown")
 		assert.Error(t, err)
@@ -216,6 +227,230 @@ func TestIsMap(t *testing.T) {
 
 	_, ok = isMap(nil)
 	assert.False(t, ok)
+}
+
+func TestJson(t *testing.T) {
+	t.Run("simple leaf nodes", func(t *testing.T) {
+		root := differ.NewDiffNode("", "unchanged")
+
+		// Added node
+		addedNode := differ.NewDiffNode("added", "added")
+		addedNode.NewValue = "new value"
+		root.Children["added"] = addedNode
+
+		// Removed node
+		removedNode := differ.NewDiffNode("removed", "removed")
+		removedNode.OldValue = "old value"
+		root.Children["removed"] = removedNode
+
+		// Modified node
+		modifiedNode := differ.NewDiffNode("modified", "modified")
+		modifiedNode.OldValue = 42
+		modifiedNode.NewValue = 100
+		root.Children["modified"] = modifiedNode
+
+		// Unchanged node
+		unchangedNode := differ.NewDiffNode("unchanged", "unchanged")
+		unchangedNode.OldValue = true
+		root.Children["unchanged"] = unchangedNode
+
+		result := Json(root)
+
+		// Verify it's valid JSON
+		var output map[string]interface{}
+		err := json.Unmarshal([]byte(result), &output)
+		assert.NoError(t, err)
+
+		// Check added node
+		assert.Contains(t, result, `"added"`)
+		assert.Contains(t, result, `"status": "added"`)
+		assert.Contains(t, result, `"newValue": "new value"`)
+
+		// Check removed node
+		assert.Contains(t, result, `"removed"`)
+		assert.Contains(t, result, `"status": "removed"`)
+		assert.Contains(t, result, `"oldValue": "old value"`)
+
+		// Check modified node
+		assert.Contains(t, result, `"modified"`)
+		assert.Contains(t, result, `"status": "modified"`)
+		assert.Contains(t, result, `"oldValue": 42`)
+		assert.Contains(t, result, `"newValue": 100`)
+
+		// Check unchanged node
+		assert.Contains(t, result, `"unchanged"`)
+		assert.Contains(t, result, `"status": "unchanged"`)
+		assert.Contains(t, result, `"oldValue": true`)
+	})
+
+	t.Run("nested structure", func(t *testing.T) {
+		root := differ.NewDiffNode("", "unchanged")
+
+		// Parent node with children
+		parentNode := differ.NewDiffNode("parent", "modified")
+		root.Children["parent"] = parentNode
+
+		// Child node
+		childNode := differ.NewDiffNode("child", "modified")
+		childNode.OldValue = "old"
+		childNode.NewValue = "new"
+		parentNode.Children["child"] = childNode
+
+		result := Json(root)
+
+		// Verify it's valid JSON
+		var output map[string]interface{}
+		err := json.Unmarshal([]byte(result), &output)
+		assert.NoError(t, err)
+
+		// Check structure
+		assert.Contains(t, result, `"parent"`)
+		assert.Contains(t, result, `"status": "modified"`)
+		assert.Contains(t, result, `"children"`)
+		assert.Contains(t, result, `"child"`)
+		assert.Contains(t, result, `"oldValue": "old"`)
+		assert.Contains(t, result, `"newValue": "new"`)
+	})
+
+	t.Run("deeply nested structure", func(t *testing.T) {
+		root := differ.NewDiffNode("", "unchanged")
+
+		// Level 1
+		level1 := differ.NewDiffNode("level1", "modified")
+		root.Children["level1"] = level1
+
+		// Level 2
+		level2 := differ.NewDiffNode("level2", "modified")
+		level1.Children["level2"] = level2
+
+		// Level 3 (leaf)
+		level3 := differ.NewDiffNode("level3", "modified")
+		level3.OldValue = "deep old"
+		level3.NewValue = "deep new"
+		level2.Children["level3"] = level3
+
+		result := Json(root)
+
+		// Verify it's valid JSON
+		var output map[string]interface{}
+		err := json.Unmarshal([]byte(result), &output)
+		assert.NoError(t, err)
+
+		assert.Contains(t, result, `"level1"`)
+		assert.Contains(t, result, `"level2"`)
+		assert.Contains(t, result, `"level3"`)
+		assert.Contains(t, result, `"oldValue": "deep old"`)
+		assert.Contains(t, result, `"newValue": "deep new"`)
+	})
+
+	t.Run("mixed types", func(t *testing.T) {
+		root := differ.NewDiffNode("", "unchanged")
+
+		// String value
+		stringNode := differ.NewDiffNode("string", "added")
+		stringNode.NewValue = "text"
+		root.Children["string"] = stringNode
+
+		// Number value
+		numberNode := differ.NewDiffNode("number", "added")
+		numberNode.NewValue = 42.5
+		root.Children["number"] = numberNode
+
+		// Boolean value
+		boolNode := differ.NewDiffNode("bool", "added")
+		boolNode.NewValue = false
+		root.Children["bool"] = boolNode
+
+		// Null value
+		nullNode := differ.NewDiffNode("nullValue", "modified")
+		nullNode.OldValue = "something"
+		nullNode.NewValue = nil
+		root.Children["nullValue"] = nullNode
+
+		result := Json(root)
+
+		// Verify it's valid JSON
+		var output map[string]interface{}
+		err := json.Unmarshal([]byte(result), &output)
+		assert.NoError(t, err)
+
+		assert.Contains(t, result, `"newValue": "text"`)
+		assert.Contains(t, result, `"newValue": 42.5`)
+		assert.Contains(t, result, `"newValue": false`)
+		// Note: nil values are omitted due to omitempty tag, so we just check oldValue exists
+		assert.Contains(t, result, `"nullValue"`)
+		assert.Contains(t, result, `"oldValue": "something"`)
+	})
+
+	t.Run("empty root", func(t *testing.T) {
+		root := differ.NewDiffNode("", "unchanged")
+
+		result := Json(root)
+
+		// Verify it's valid JSON
+		var output map[string]interface{}
+		err := json.Unmarshal([]byte(result), &output)
+		assert.NoError(t, err)
+
+		// Should be empty object
+		assert.Equal(t, "{}", strings.TrimSpace(result))
+	})
+
+	t.Run("added complex value", func(t *testing.T) {
+		root := differ.NewDiffNode("", "unchanged")
+
+		// Added parent with children
+		addedParent := differ.NewDiffNode("config", "added")
+		root.Children["config"] = addedParent
+
+		hostNode := differ.NewDiffNode("host", "added")
+		hostNode.NewValue = "localhost"
+		addedParent.Children["host"] = hostNode
+
+		portNode := differ.NewDiffNode("port", "added")
+		portNode.NewValue = 8080
+		addedParent.Children["port"] = portNode
+
+		result := Json(root)
+
+		// Verify it's valid JSON
+		var output map[string]interface{}
+		err := json.Unmarshal([]byte(result), &output)
+		assert.NoError(t, err)
+
+		assert.Contains(t, result, `"config"`)
+		assert.Contains(t, result, `"status": "added"`)
+		assert.Contains(t, result, `"children"`)
+		assert.Contains(t, result, `"host"`)
+		assert.Contains(t, result, `"newValue": "localhost"`)
+		assert.Contains(t, result, `"port"`)
+		assert.Contains(t, result, `"newValue": 8080`)
+	})
+
+	t.Run("removed complex value", func(t *testing.T) {
+		root := differ.NewDiffNode("", "unchanged")
+
+		// Removed parent with children
+		removedParent := differ.NewDiffNode("oldConfig", "removed")
+		root.Children["oldConfig"] = removedParent
+
+		keyNode := differ.NewDiffNode("key", "removed")
+		keyNode.OldValue = "value"
+		removedParent.Children["key"] = keyNode
+
+		result := Json(root)
+
+		// Verify it's valid JSON
+		var output map[string]interface{}
+		err := json.Unmarshal([]byte(result), &output)
+		assert.NoError(t, err)
+
+		assert.Contains(t, result, `"oldConfig"`)
+		assert.Contains(t, result, `"status": "removed"`)
+		assert.Contains(t, result, `"children"`)
+		assert.Contains(t, result, `"key"`)
+		assert.Contains(t, result, `"oldValue": "value"`)
+	})
 }
 
 func TestPlain(t *testing.T) {

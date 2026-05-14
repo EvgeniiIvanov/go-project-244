@@ -12,6 +12,8 @@ func Format(raw *differ.DiffNode, format string) (string, error) {
 		return Stylish(raw, 0), nil
 	case "plain":
 		return Plain(raw, 0), nil
+	case "json":
+		return Json(raw), nil
 	default:
 		return "", fmt.Errorf("unknown format: %s", format)
 	}
