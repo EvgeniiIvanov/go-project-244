@@ -2,17 +2,18 @@ package formatter
 
 import (
 	"code/internal/differ"
+	"code/internal/models"
 	"fmt"
 	"sort"
 )
 
 func Format(raw *differ.DiffNode, format string) (string, error) {
 	switch format {
-	case "stylish":
+	case models.OutputFormatStylish:
 		return Stylish(raw, 0), nil
-	case "plain":
+	case models.OutputFormatPlain:
 		return Plain(raw, 0), nil
-	case "json":
+	case models.OutputFormatJSON:
 		return Json(raw), nil
 	default:
 		return "", fmt.Errorf("unknown format: %s", format)

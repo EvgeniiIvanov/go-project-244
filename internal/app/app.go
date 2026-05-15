@@ -3,6 +3,7 @@ package app
 import (
 	"code/internal/differ"
 	"code/internal/formatter"
+	"code/internal/models"
 	"code/internal/parser"
 	"fmt"
 	"path/filepath"
@@ -11,10 +12,10 @@ import (
 func getFileFormat(filePath string) string {
 	ext := filepath.Ext(filePath)
 	switch ext {
-	case ".json":
-		return "json"
-	case ".yaml", ".yml":
-		return "yaml"
+	case models.ExtJSON:
+		return models.FormatJSON
+	case models.ExtYAML, models.ExtYML:
+		return models.FormatYAML
 	default:
 		return ""
 	}

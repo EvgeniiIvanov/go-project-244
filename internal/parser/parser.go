@@ -1,6 +1,7 @@
 package parser
 
 import (
+	"code/internal/models"
 	"fmt"
 	"path/filepath"
 )
@@ -12,9 +13,9 @@ func Parse(filePath string) (map[string]interface{}, error) {
 	var err error
 
 	switch ext {
-	case ".json":
+	case models.ExtJSON:
 		result, err = parseJSON(filePath)
-	case ".yaml", ".yml":
+	case models.ExtYAML, models.ExtYML:
 		result, err = parseYAML(filePath)
 	default:
 		return nil, fmt.Errorf("unsupported file type: %s", ext)

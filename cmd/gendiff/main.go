@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"code/internal/app"
+	"code/internal/models"
 
 	"github.com/urfave/cli/v3"
 )
@@ -30,7 +31,7 @@ func main() {
 			&cli.StringFlag{
 				Name:    "format",
 				Aliases: []string{"f"},
-				Value:   "stylish",
+				Value:   models.OutputFormatStylish,
 				Usage:   "output format",
 			},
 		},
