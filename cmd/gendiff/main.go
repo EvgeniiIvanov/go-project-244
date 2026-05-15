@@ -19,7 +19,12 @@ func main() {
 			if cmd.Args().Len() != 2 {
 				return fmt.Errorf("need two file paths")
 			}
-			return app.Run(cmd.Args().Get(0), cmd.Args().Get(1), cmd.String("format"))
+			result, err := app.Run(cmd.Args().Get(0), cmd.Args().Get(1), cmd.String("format"))
+			if err != nil {
+				return err
+			}
+			fmt.Println(result)
+			return nil
 		},
 		Flags: []cli.Flag{
 			&cli.StringFlag{

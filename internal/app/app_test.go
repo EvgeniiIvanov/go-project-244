@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestRunToStringWithFixtures(t *testing.T) {
+func TestRunWithFixtures(t *testing.T) {
 	formats := []struct {
 		name string
 		dir  string
@@ -162,7 +162,7 @@ func TestRunToStringWithFixtures(t *testing.T) {
 					file1 := filepath.Join(fixturesDir, tc.file1+format.ext)
 					file2 := filepath.Join(fixturesDir, tc.file2+format.ext)
 
-					result, err := RunToString(file1, file2, "stylish")
+					result, err := Run(file1, file2, "stylish")
 
 					assert.NoError(t, err)
 
@@ -179,19 +179,19 @@ func TestRunToStringWithFixtures(t *testing.T) {
 	}
 }
 
-func TestRunToStringErrors(t *testing.T) {
+func TestRunErrors(t *testing.T) {
 	t.Run("file1 does not exist", func(t *testing.T) {
-		_, err := RunToString("nonexistent.json", "testdata/fixtures/json/flat1.json", "stylish")
+		_, err := Run("nonexistent.json", "testdata/fixtures/json/flat1.json", "stylish")
 		assert.Error(t, err)
 	})
 
 	t.Run("file2 does not exist", func(t *testing.T) {
-		_, err := RunToString("testdata/fixtures/json/flat1.json", "nonexistent.json", "stylish")
+		_, err := Run("testdata/fixtures/json/flat1.json", "nonexistent.json", "stylish")
 		assert.Error(t, err)
 	})
 
 	t.Run("unsupported file format", func(t *testing.T) {
-		_, err := RunToString("testdata/fixtures/json/flat1.txt", "testdata/fixtures/json/flat2.txt", "stylish")
+		_, err := Run("testdata/fixtures/json/flat1.txt", "testdata/fixtures/json/flat2.txt", "stylish")
 		assert.Error(t, err)
 	})
 }
@@ -202,12 +202,12 @@ func TestRun(t *testing.T) {
 		file2 := filepath.Join("..", "..", "testdata", "fixtures", "json", "flat2.json")
 
 		// Run should not return an error for valid files
-		err := Run(file1, file2, "stylish")
+		_, err := Run(file1, file2, "stylish")
 		assert.NoError(t, err)
 	})
 
 	t.Run("error with nonexistent file", func(t *testing.T) {
-		err := Run("nonexistent.json", filepath.Join("..", "..", "testdata", "fixtures", "json", "flat1.json"), "stylish")
+		_, err := Run("nonexistent.json", filepath.Join("..", "..", "testdata", "fixtures", "json", "flat1.json"), "stylish")
 		assert.Error(t, err)
 	})
 }
@@ -227,7 +227,7 @@ func TestPlainFormat(t *testing.T) {
 			file1 := filepath.Join("..", "..", "testdata", "fixtures", format.dir, "nested1"+format.ext)
 			file2 := filepath.Join("..", "..", "testdata", "fixtures", format.dir, "nested2"+format.ext)
 
-			result, err := RunToString(file1, file2, "plain")
+			result, err := Run(file1, file2, "plain")
 			assert.NoError(t, err)
 
 			expectedLines := []string{
@@ -267,7 +267,7 @@ func TestJSONFormat(t *testing.T) {
 			file1 := filepath.Join("..", "..", "testdata", "fixtures", format.dir, "nested1"+format.ext)
 			file2 := filepath.Join("..", "..", "testdata", "fixtures", format.dir, "nested2"+format.ext)
 
-			result, err := RunToString(file1, file2, "json")
+			result, err := Run(file1, file2, "json")
 			assert.NoError(t, err)
 
 			// Verify it's valid JSON

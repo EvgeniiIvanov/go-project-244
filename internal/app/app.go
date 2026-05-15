@@ -7,7 +7,7 @@ import (
 	"fmt"
 )
 
-func RunToString(filePath1, filePath2 string, format string) (string, error) {
+func Run(filePath1, filePath2 string, format string) (string, error) {
 	data1, err := parser.Parse(filePath1)
 	if err != nil {
 		return "", fmt.Errorf("file1: %w", err)
@@ -26,13 +26,4 @@ func RunToString(filePath1, filePath2 string, format string) (string, error) {
 	}
 
 	return formatted, nil
-}
-
-func Run(filePath1, filePath2 string, format string) error {
-	result, err := RunToString(filePath1, filePath2, format)
-	if err != nil {
-		return err
-	}
-	fmt.Println(result)
-	return nil
 }
