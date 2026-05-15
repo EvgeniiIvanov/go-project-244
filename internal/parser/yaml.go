@@ -13,14 +13,9 @@ func parseYAML(filePath string) (map[string]interface{}, error) {
 		return nil, fmt.Errorf("failed to read file: %w", err)
 	}
 
-	var result map[string]interface{}
+	result := make(map[string]interface{})
 	if err := yaml.Unmarshal(data, &result); err != nil {
 		return nil, fmt.Errorf("invalid YAML: %w", err)
-	}
-
-	// normalize resulting map
-	if result == nil {
-		result = map[string]interface{}{}
 	}
 
 	return result, nil

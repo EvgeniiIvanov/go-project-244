@@ -9,21 +9,12 @@ import (
 func Parse(filePath string) (map[string]interface{}, error) {
 	ext := filepath.Ext(filePath)
 
-	var result map[string]interface{}
-	var err error
-
 	switch ext {
 	case models.ExtJSON:
-		result, err = parseJSON(filePath)
+		return parseJSON(filePath)
 	case models.ExtYAML, models.ExtYML:
-		result, err = parseYAML(filePath)
+		return parseYAML(filePath)
 	default:
-		err = fmt.Errorf("unsupported file type: %s", ext)
+		return nil, fmt.Errorf("unsupported file type: %s", ext)
 	}
-
-	if err != nil {
-		return nil, err
-	}
-
-	return result, nil
 }
