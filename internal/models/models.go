@@ -19,3 +19,11 @@ const (
 	OutputFormatPlain   = "plain"
 	OutputFormatJSON    = "json"
 )
+
+// Diff node status
+const (
+	StatusAdded     = "added"
+	StatusRemoved   = "removed"
+	StatusModified  = "modified"
+	StatusUnchanged = "unchanged"
+)

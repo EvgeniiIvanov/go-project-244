@@ -1,6 +1,7 @@
 package differ
 
 import (
+	"code/internal/models"
 	"reflect"
 )
 
@@ -32,7 +33,7 @@ func NewLeafNode(key, status string, old, new interface{}) *DiffNode {
 }
 
 func Diff(data1, data2 map[string]interface{}) *DiffNode {
-	root := NewDiffNode("", "unchanged")
+	root := NewDiffNode("", models.StatusUnchanged)
 
 	// Collect all keys
 	allKeys := make(map[string]struct{})
@@ -68,28 +69,28 @@ func processKey(key string, v1 interface{}, ok1 bool, v2 interface{}, ok2 bool) 
 // handleAdded processes a key that exists only in the second file
 func handleAdded(key string, value interface{}) *DiffNode {
 	if m, isMap := toMap(value); isMap {
-		node := NewDiffNode(key, "added")
-		node.Children = buildTreeForAdded(m)
+		node := NewDiffNode(key, models.StatusAdded)
+		node.Children = buildFullTree(m, models.StatusAdded)
 		return node
 	}
-	return NewLeafNode(key, "added", nil, value)
+	return NewLeafNode(key, models.StatusAdded, nil, value)
 }
 
 // handleRemoved processes a key that exists only in the first file
 func handleRemoved(key string, value interface{}) *DiffNode {
 	if m, isMap := toMap(value); isMap {
-		node := NewDiffNode(key, "removed")
-		node.Children = buildTreeForRemoved(m)
+		node := NewDiffNode(key, models.StatusRemoved)
+		node.Children = buildFullTree(m, models.StatusRemoved)
 		return node
 	}
-	return NewLeafNode(key, "removed", value, nil)
+	return NewLeafNode(key, models.StatusRemoved, value, nil)
 }
 
 // handleBothExist processes a key that exists in both files
 func handleBothExist(key string, v1, v2 interface{}) *DiffNode {
 	// Both are maps - recursive diff
 	if areMaps(v1, v2) {
-		node := NewDiffNode(key, "modified")
+		node := NewDiffNode(key, models.StatusModified)
 		node.Children = Diff(
 			v1.(map[string]interface{}),
 			v2.(map[string]interface{}),
@@ -100,57 +101,37 @@ func handleBothExist(key string, v1, v2 interface{}) *DiffNode {
 	// Values are equal
 	if reflect.DeepEqual(v1, v2) {
 		if m, isMap := toMap(v1); isMap {
-			node := NewDiffNode(key, "unchanged")
-			node.Children = buildTreeForUnchanged(m)
+			node := NewDiffNode(key, models.StatusUnchanged)
+			node.Children = buildFullTree(m, models.StatusUnchanged)
 			return node
 		}
-		return NewLeafNode(key, "unchanged", v1, v2)
+		return NewLeafNode(key, models.StatusUnchanged, v1, v2)
 	}
 
 	// Values are different
-	return NewLeafNode(key, "modified", v1, v2)
+	return NewLeafNode(key, models.StatusModified, v1, v2)
 }
 
-// buildTreeForAdded builds a tree for added nested object
-func buildTreeForAdded(m map[string]interface{}) map[string]*DiffNode {
+// buildFullTree builds a tree for a nested object with the given status
+func buildFullTree(m map[string]interface{}, status string) map[string]*DiffNode {
 	children := make(map[string]*DiffNode)
 	for k, v := range m {
 		if nestedMap, isMap := toMap(v); isMap {
-			node := NewDiffNode(k, "added")
-			node.Children = buildTreeForAdded(nestedMap)
+			node := NewDiffNode(k, status)
+			node.Children = buildFullTree(nestedMap, status)
 			children[k] = node
 		} else {
-			children[k] = NewLeafNode(k, "added", nil, v)
-		}
-	}
-	return children
-}
-
-// buildTreeForRemoved builds a tree for removed nested object
-func buildTreeForRemoved(m map[string]interface{}) map[string]*DiffNode {
-	children := make(map[string]*DiffNode)
-	for k, v := range m {
-		if nestedMap, isMap := toMap(v); isMap {
-			node := NewDiffNode(k, "removed")
-			node.Children = buildTreeForRemoved(nestedMap)
-			children[k] = node
-		} else {
-			children[k] = NewLeafNode(k, "removed", v, nil)
-		}
-	}
-	return children
-}
-
-// buildTreeForUnchanged builds a tree for unchanged nested object
-func buildTreeForUnchanged(m map[string]interface{}) map[string]*DiffNode {
-	children := make(map[string]*DiffNode)
-	for k, v := range m {
-		if nestedMap, isMap := toMap(v); isMap {
-			node := NewDiffNode(k, "unchanged")
-			node.Children = buildTreeForUnchanged(nestedMap)
-			children[k] = node
-		} else {
-			children[k] = NewLeafNode(k, "unchanged", v, v)
+			// Determine old/new values based on status
+			var old, new interface{}
+			switch status {
+			case models.StatusAdded:
+				old, new = nil, v
+			case models.StatusRemoved:
+				old, new = v, nil
+			case models.StatusUnchanged:
+				old, new = v, v
+			}
+			children[k] = NewLeafNode(k, status, old, new)
 		}
 	}
 	return children
