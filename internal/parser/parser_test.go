@@ -100,7 +100,7 @@ func TestParseYAML(t *testing.T) {
 			name:    "with numbers",
 			content: "age: 25\nscore: 98.6",
 			expected: map[string]interface{}{
-				"age":   float64(25),
+				"age":   25,
 				"score": 98.6,
 			},
 		},
@@ -110,7 +110,7 @@ func TestParseYAML(t *testing.T) {
 			expected: map[string]interface{}{
 				"user": map[string]interface{}{
 					"name": "Alice",
-					"age":  float64(30),
+					"age":  30,
 				},
 			},
 		},
@@ -343,10 +343,10 @@ user:
 			expected: map[string]interface{}{
 				"user": map[string]interface{}{
 					"name": "John",
-					"age":  float64(30),
+					"age":  30,
 					"address": map[string]interface{}{
 						"city": "NYC",
-						"zip":  float64(10001),
+						"zip":  10001,
 					},
 					"contacts": []interface{}{"email", "phone"},
 				},
@@ -382,11 +382,11 @@ users:
 				"users": []interface{}{
 					map[string]interface{}{
 						"name": "Alice",
-						"age":  float64(25),
+						"age":  25,
 					},
 					map[string]interface{}{
 						"name": "Bob",
-						"age":  float64(30),
+						"age":  30,
 					},
 				},
 			},
@@ -549,7 +549,7 @@ config:
 			"config": map[string]interface{}{
 				"database": map[string]interface{}{
 					"host": "localhost",
-					"port": float64(5432),
+					"port": 5432,
 					"credentials": map[string]interface{}{
 						"username": "admin",
 						"password": "secret",
@@ -559,7 +559,7 @@ config:
 					"logging": true,
 					"cache": map[string]interface{}{
 						"enabled": true,
-						"ttl":     float64(3600),
+						"ttl":     3600,
 					},
 				},
 			},

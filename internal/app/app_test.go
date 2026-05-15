@@ -194,6 +194,22 @@ func TestRunErrors(t *testing.T) {
 		_, err := Run("testdata/fixtures/json/flat1.txt", "testdata/fixtures/json/flat2.txt", "stylish")
 		assert.Error(t, err)
 	})
+
+	t.Run("cannot mix JSON and YAML", func(t *testing.T) {
+		file1 := filepath.Join("..", "..", "testdata", "fixtures", "json", "flat1.json")
+		file2 := filepath.Join("..", "..", "testdata", "fixtures", "yaml", "flat1.yaml")
+		_, err := Run(file1, file2, "stylish")
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "cannot compare files of different formats")
+	})
+
+	t.Run("cannot mix YAML and JSON", func(t *testing.T) {
+		file1 := filepath.Join("..", "..", "testdata", "fixtures", "yaml", "flat1.yaml")
+		file2 := filepath.Join("..", "..", "testdata", "fixtures", "json", "flat1.json")
+		_, err := Run(file1, file2, "stylish")
+		assert.Error(t, err)
+		assert.Contains(t, err.Error(), "cannot compare files of different formats")
+	})
 }
 
 func TestRun(t *testing.T) {
