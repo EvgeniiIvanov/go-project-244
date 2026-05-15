@@ -18,7 +18,7 @@ func Parse(filePath string) (map[string]interface{}, error) {
 	case models.ExtYAML, models.ExtYML:
 		result, err = parseYAML(filePath)
 	default:
-		return nil, fmt.Errorf("unsupported file type: %s", ext)
+		err = fmt.Errorf("unsupported file type: %s", ext)
 	}
 
 	if err != nil {

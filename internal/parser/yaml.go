@@ -10,12 +10,12 @@ import (
 func parseYAML(filePath string) (map[string]interface{}, error) {
 	data, err := os.ReadFile(filePath)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read file: %s", err)
+		return nil, fmt.Errorf("failed to read file: %w", err)
 	}
 
 	var result map[string]interface{}
 	if err := yaml.Unmarshal(data, &result); err != nil {
-		return nil, fmt.Errorf("invalid YAML: %s", err)
+		return nil, fmt.Errorf("invalid YAML: %w", err)
 	}
 
 	// normalize resulting map
